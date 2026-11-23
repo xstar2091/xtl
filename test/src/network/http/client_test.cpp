@@ -417,8 +417,6 @@ TEST(ClientTest, StartWithRetryAsyncWithCancel)
     client.max_retry_attempts = 3;
     client.StartWithRetryAsync([&client, &ioc]
     {
-        printf("lxdebug,   body:%s\n", client.response.Get<x::http::Response::StringBody>().body().c_str());
-        printf("lxdebug, status:%d\n", client.response.StatusCode());
         EXPECT_EQ(client.error_code().value(), boost::beast::errc::operation_canceled);
         EXPECT_TRUE(client.current_attempt() < client.max_retry_attempts);
         EXPECT_EQ(client.in_fly_count(), 0);
