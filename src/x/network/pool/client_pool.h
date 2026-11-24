@@ -76,13 +76,7 @@ std::future<int> ClientPool<ClientType>::ReadyCount() const
 {
     std::promise<int> promise;
     auto future = promise.get_future();
-    boost::asio::dispatch(
-        io_context_,
-        [this, promise = std::move(promise)]() mutable
-        {
-            promise.set_value(static_cast<int>(ready_pool_.size()));
-        }
-    );
+    ReadyCount([promise = std::move(promise)](const int ready_count) mutable { promise.set_value(ready_count); });
     return future;
 }
 
@@ -103,13 +97,7 @@ std::future<int> ClientPool<ClientType>::InUseCount() const
 {
     std::promise<int> promise;
     auto future = promise.get_future();
-    boost::asio::dispatch(
-        io_context_,
-        [this, promise = std::move(promise)]() mutable
-        {
-            promise.set_value(static_cast<int>(in_use_pool_.size()));
-        }
-    );
+    InUseCount([promise = std::move(promise)](const int in_use_count) mutable { promise.set_value(in_use_count); });
     return future;
 }
 
@@ -130,24 +118,7 @@ std::future<ClientType*> ClientPool<ClientType>::GetClient()
 {
     std::promise<ClientType*> promise;
     auto future = promise.get_future();
-    boost::asio::dispatch(
-        io_context_,
-        [this, promise = std::move(promise)]() mutable
-        {
-            ClientType* client = nullptr;
-            if (ready_pool_.empty())
-            {
-                client = client_create_factory_(io_context_);
-            }
-            else
-            {
-                client = ready_pool_.back();
-                ready_pool_.pop_back();
-            }
-            in_use_pool_.insert(client);
-            promise.set_value(client);
-        }
-    );
+    GetClient([promise = std::move(promise)](ClientType* client) mutable{ promise.set_value(client); });
     return future;
 }
 
@@ -156,7 +127,7 @@ void ClientPool<ClientType>::GetClient(std::move_only_function<void(ClientType*)
 {
     boost::asio::dispatch(
         io_context_,
-        [this, callback = std::move(callback)]
+        [this, callback = std::move(callback)] mutable
         {
             ClientType* client = nullptr;
             if (ready_pool_.empty())
@@ -179,24 +150,7 @@ std::future<bool> ClientPool<ClientType>::Release(ClientType* client)
 {
     std::promise<bool> promise;
     auto future = promise.get_future();
-    boost::asio::dispatch(
-        io_context_,
-        [this, client, promise = std::move(promise)]() mutable
-        {
-            bool result = false;
-            if (const auto it = in_use_pool_.find(client); it == in_use_pool_.end())
-            {
-                delete client;
-            }
-            else
-            {
-                result = true;
-                in_use_pool_.erase(it);
-                ready_pool_.push_back(client);
-            }
-            promise.set_value(result);
-        }
-    );
+    Release(client, [promise = std::move(promise)](const bool result) mutable { promise.set_value(result); });
     return future;
 }
 
@@ -228,18 +182,7 @@ std::future<int> ClientPool<ClientType>::CancelAll()
 {
     std::promise<int> promise;
     auto future = promise.get_future();
-    boost::asio::dispatch(
-        io_context_,
-        [this, promise = std::move(promise)]() mutable
-        {
-            const int result = static_cast<int>(in_use_pool_.size());
-            for (auto& client : in_use_pool_)
-            {
-                client.Cancel();
-            }
-            promise.set_value(result);
-        }
-    );
+    CancelAll([promise = std::move(promise)](const int cancelled_count) mutable { promise.set_value(cancelled_count); });
     return future;
 }
 
@@ -251,9 +194,9 @@ void ClientPool<ClientType>::CancelAll(std::move_only_function<void(int)> callba
         [this, callback = std::move(callback)]() mutable
         {
             const int result = static_cast<int>(in_use_pool_.size());
-            for (auto& client : in_use_pool_)
+            for (auto* client : in_use_pool_)
             {
-                client.Cancel();
+                client->Cancel();
             }
             callback(result);
         }
