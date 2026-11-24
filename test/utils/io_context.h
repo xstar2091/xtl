@@ -1,7 +1,8 @@
 #pragma once
 
 #include <thread>
-#include <boost/asio.hpp>
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
 
 namespace x::test
 {

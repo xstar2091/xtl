@@ -1,7 +1,13 @@
 #pragma once
 
 #include <variant>
-#include <boost/beast/http.hpp>
+#include <boost/beast/http/buffer_body.hpp>
+#include <boost/beast/http/dynamic_body.hpp>
+#include <boost/beast/http/empty_body.hpp>
+#include <boost/beast/http/file_body.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/span_body.hpp>
+#include <boost/beast/http/string_body.hpp>
 
 namespace x::http
 {

@@ -3,7 +3,10 @@
 #include <functional>
 #include <future>
 #include <boost/asio/io_context.hpp>
-#include <boost/beast.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 #include "x/network/http/request.h"
 #include "x/network/http/response.h"
 

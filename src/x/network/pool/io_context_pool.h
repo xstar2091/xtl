@@ -2,6 +2,7 @@
 
 #include <thread>
 #include <vector>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 
 namespace x::pool

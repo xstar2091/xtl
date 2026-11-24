@@ -1,5 +1,12 @@
 #include "x/network/http/client.h"
 
+#include <boost/asio/dispatch.hpp>
+#include <boost/asio/socket_base.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/read.hpp>
+#include <boost/beast/http/write.hpp>
+
 namespace x::http
 {
 
