@@ -26,14 +26,12 @@ public:
     [[nodiscard]] boost::asio::io_context& io_context() { return io_context_; }
     [[nodiscard]] const boost::asio::io_context& io_context() const { return io_context_; }
 
-    // NOLINTNEXTLINE(modernize-use-nodiscard)
-    std::future<int> ReadyCount() const;
+    [[nodiscard]] std::future<int> ReadyCount() const;
     void ReadyCount(std::move_only_function<void(int)> callback) const;
-    // NOLINTNEXTLINE(modernize-use-nodiscard)
-    std::future<int> InUseCount() const;
+    [[nodiscard]] std::future<int> InUseCount() const;
     void InUseCount(std::move_only_function<void(int)> callback) const;
 
-    std::future<ClientType*> GetClient();
+    [[nodiscard]] std::future<ClientType*> GetClient();
     void GetClient(std::move_only_function<void(ClientType*)> callback);
     std::future<bool> Release(ClientType* client);
     void Release(ClientType* client, std::move_only_function<void(bool)> callback);
