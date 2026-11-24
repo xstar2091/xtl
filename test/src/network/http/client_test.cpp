@@ -444,3 +444,25 @@ TEST(ClientTest, StartWithRetryAsyncWithCancel)
     client.Cancel();
     ioc.Wait();
 }
+
+TEST(ClientTest, InFlyCount)
+{
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
+    x::http::Client client(ioc.io_context());
+    InitClient(client);
+
+    client.timeout = 10000;
+    client.StartAsync([&client, &ioc]
+    {
+        EXPECT_EQ(client.error_code().value(), boost::beast::errc::success);
+        EXPECT_EQ(client.in_fly_count(), 0);
+        ioc.Stop();
+    });
+    client.StartAsync([&client, &ioc]
+    {
+        EXPECT_EQ(client.error_code().value(), boost::beast::errc::operation_in_progress);
+        EXPECT_EQ(client.in_fly_count(), 1);
+        ioc.Stop();
+    });
+}
