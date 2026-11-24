@@ -28,22 +28,17 @@ public:
 
     // NOLINTNEXTLINE(modernize-use-nodiscard)
     std::future<int> ReadyCount() const;
-    template <class ReadyCountCallbackType>
-    void ReadyCount(ReadyCountCallbackType&& callback) const;
+    void ReadyCount(std::move_only_function<void(int)> callback) const;
     // NOLINTNEXTLINE(modernize-use-nodiscard)
     std::future<int> InUseCount() const;
-    template <class InUseCountCallbackType>
-    void InUseCount(InUseCountCallbackType&& callback) const;
+    void InUseCount(std::move_only_function<void(int)> callback) const;
 
     std::future<ClientType*> GetClient();
-    template <class GetClientCallbackType>
-    void GetClient(GetClientCallbackType&& callback);
+    void GetClient(std::move_only_function<void(ClientType*)> callback);
     std::future<bool> Release(ClientType* client);
-    template <class ReleaseClientCallbackType>
-    void Release(ClientType* client, ReleaseClientCallbackType&& callback);
+    void Release(ClientType* client, std::move_only_function<void(bool)> callback);
     std::future<int> CancelAll();
-    template <class CancelAllCallbackType>
-    void CancelAll(CancelAllCallbackType&& callback);
+    void CancelAll(std::move_only_function<void(int)> callback);
     void WaitAllReady() const;
 };
 
@@ -92,12 +87,11 @@ std::future<int> ClientPool<ClientType>::ReadyCount() const
 }
 
 template <class ClientType>
-template <class ReadyCountCallbackType>
-void ClientPool<ClientType>::ReadyCount(ReadyCountCallbackType&& callback) const
+void ClientPool<ClientType>::ReadyCount(std::move_only_function<void(int)> callback) const
 {
     boost::asio::dispatch(
         io_context_,
-        [this, callback = std::forward<ReadyCountCallbackType>(callback)]() mutable
+        [this, callback = std::move(callback)]() mutable
         {
             callback(static_cast<int>(ready_pool_.size()));
         }
@@ -120,12 +114,11 @@ std::future<int> ClientPool<ClientType>::InUseCount() const
 }
 
 template <class ClientType>
-template <class InUseCountCallbackType>
-void ClientPool<ClientType>::InUseCount(InUseCountCallbackType&& callback) const
+void ClientPool<ClientType>::InUseCount(std::move_only_function<void(int)> callback) const
 {
     boost::asio::dispatch(
         io_context_,
-        [this, callback = std::forward<InUseCountCallbackType>(callback)]() mutable
+        [this, callback = std::move(callback)]() mutable
         {
             callback(static_cast<int>(in_use_pool_.size()));
         }
@@ -159,12 +152,11 @@ std::future<ClientType*> ClientPool<ClientType>::GetClient()
 }
 
 template <class ClientType>
-template <class GetClientCallbackType>
-void ClientPool<ClientType>::GetClient(GetClientCallbackType&& callback)
+void ClientPool<ClientType>::GetClient(std::move_only_function<void(ClientType*)> callback)
 {
     boost::asio::dispatch(
         io_context_,
-        [this, callback = std::forward<GetClientCallbackType>(callback)]
+        [this, callback = std::move(callback)]
         {
             ClientType* client = nullptr;
             if (ready_pool_.empty())
@@ -209,12 +201,11 @@ std::future<bool> ClientPool<ClientType>::Release(ClientType* client)
 }
 
 template <class ClientType>
-template <class ReleaseClientCallbackType>
-void ClientPool<ClientType>::Release(ClientType* client, ReleaseClientCallbackType&& callback)
+void ClientPool<ClientType>::Release(ClientType* client, std::move_only_function<void(bool)> callback)
 {
     boost::asio::dispatch(
         io_context_,
-        [this, client, callback = std::forward<ReleaseClientCallbackType>(callback)]() mutable
+        [this, client, callback = std::move(callback)]() mutable
         {
             bool result = false;
             if (const auto it = in_use_pool_.find(client); it == in_use_pool_.end())
@@ -253,12 +244,11 @@ std::future<int> ClientPool<ClientType>::CancelAll()
 }
 
 template <class ClientType>
-template <class CancelAllCallbackType>
-void ClientPool<ClientType>::CancelAll(CancelAllCallbackType&& callback)
+void ClientPool<ClientType>::CancelAll(std::move_only_function<void(int)> callback)
 {
     boost::asio::dispatch(
         io_context_,
-        [this, callback = std::forward<CancelAllCallbackType>(callback)]
+        [this, callback = std::move(callback)]() mutable
         {
             const int result = static_cast<int>(in_use_pool_.size());
             for (auto& client : in_use_pool_)
