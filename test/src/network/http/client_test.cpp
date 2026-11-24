@@ -33,7 +33,6 @@ TEST(ClientTest, StartFuture)
     EXPECT_EQ(resp.result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
     EXPECT_FALSE(resp.body().empty());
-    EXPECT_EQ(client.in_fly_count(), 0);
 }
 
 TEST(ClientTest, StartFutureTimeout)
@@ -46,7 +45,6 @@ TEST(ClientTest, StartFutureTimeout)
     client.timeout = 1;
     client.StartFuture().get();
     EXPECT_EQ(client.error_code().value(), 1);
-    EXPECT_EQ(client.in_fly_count(), 0);
 }
 
 TEST(ClientTest, StartWithRetryFutureOK)
@@ -65,7 +63,6 @@ TEST(ClientTest, StartWithRetryFutureOK)
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
     EXPECT_FALSE(resp.body().empty());
     EXPECT_TRUE(client.current_attempt() <= client.max_retry_attempts);
-    EXPECT_EQ(client.in_fly_count(), 0);
 }
 
 TEST(ClientTest, StartWithRetryFutureError)
@@ -81,7 +78,6 @@ TEST(ClientTest, StartWithRetryFutureError)
     client.StartWithRetryFuture().get();
     EXPECT_EQ(client.error_code().value(), 1);
     EXPECT_EQ(client.current_attempt(), client.max_retry_attempts);
-    EXPECT_EQ(client.in_fly_count(), 0);
 }
 
 TEST(ClientTest, StartAsync)
@@ -98,7 +94,6 @@ TEST(ClientTest, StartAsync)
         EXPECT_EQ(resp.result(), boost::beast::http::status::ok);
         EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
         EXPECT_FALSE(resp.body().empty());
-        EXPECT_EQ(client.in_fly_count(), 0);
         ioc.Stop();
     });
 
@@ -116,7 +111,6 @@ TEST(ClientTest, StartAsyncTimout)
     client.StartAsync([&client, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 1);
-        EXPECT_EQ(client.in_fly_count(), 0);
         ioc.Stop();
     });
 
@@ -140,7 +134,6 @@ TEST(ClientTest, StartWithRetryAsyncOK)
         EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
         EXPECT_FALSE(resp.body().empty());
         EXPECT_TRUE(client.current_attempt() <= client.max_retry_attempts);
-        EXPECT_EQ(client.in_fly_count(), 0);
         ioc.Stop();
     });
 
@@ -161,7 +154,6 @@ TEST(ClientTest, StartWithRetryAsyncError)
     {
         EXPECT_EQ(client.error_code().value(), 1);
         EXPECT_EQ(client.current_attempt(), client.max_retry_attempts);
-        EXPECT_EQ(client.in_fly_count(), 0);
         ioc.Stop();
     });
 
@@ -181,7 +173,6 @@ TEST(ClientTest, StartFutureOKWithReset)
     EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
     EXPECT_FALSE(resp->body().empty());
-    EXPECT_EQ(client.in_fly_count(), 0);
 
     client.Reset();
     resp = &InitClient(client);
@@ -191,7 +182,6 @@ TEST(ClientTest, StartFutureOKWithReset)
     EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
     EXPECT_FALSE(resp->body().empty());
-    EXPECT_EQ(client.in_fly_count(), 0);
 }
 
 TEST(ClientTest, StartFutureErrorWithReset)
@@ -204,7 +194,6 @@ TEST(ClientTest, StartFutureErrorWithReset)
     client.timeout = 1;
     client.StartFuture().get();
     EXPECT_EQ(client.error_code().value(), 1);
-    EXPECT_EQ(client.in_fly_count(), 0);
 
     client.Reset();
     const auto* resp = &InitClient(client);
@@ -214,7 +203,6 @@ TEST(ClientTest, StartFutureErrorWithReset)
     EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
     EXPECT_FALSE(resp->body().empty());
-    EXPECT_EQ(client.in_fly_count(), 0);
 }
 
 TEST(ClientTest, StartWithRetryFutureOKWithReset)
@@ -233,7 +221,6 @@ TEST(ClientTest, StartWithRetryFutureOKWithReset)
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
     EXPECT_FALSE(resp->body().empty());
     EXPECT_TRUE(client.current_attempt() <= client.max_retry_attempts);
-    EXPECT_EQ(client.in_fly_count(), 0);
 
     client.Reset();
     resp = &InitClient(client);
@@ -243,7 +230,6 @@ TEST(ClientTest, StartWithRetryFutureOKWithReset)
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
     EXPECT_FALSE(resp->body().empty());
     EXPECT_TRUE(client.current_attempt() <= client.max_retry_attempts);
-    EXPECT_EQ(client.in_fly_count(), 0);
 }
 
 TEST(ClientTest, StartWithRetryFutureErrorWithReset)
@@ -259,7 +245,6 @@ TEST(ClientTest, StartWithRetryFutureErrorWithReset)
     client.StartWithRetryFuture().get();
     EXPECT_EQ(client.error_code().value(), 1);
     EXPECT_EQ(client.current_attempt(), client.max_retry_attempts);
-    EXPECT_EQ(client.in_fly_count(), 0);
 
     client.Reset();
     const auto* resp = &InitClient(client);
@@ -270,7 +255,6 @@ TEST(ClientTest, StartWithRetryFutureErrorWithReset)
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
     EXPECT_FALSE(resp->body().empty());
     EXPECT_TRUE(client.current_attempt() <= client.max_retry_attempts);
-    EXPECT_EQ(client.in_fly_count(), 0);
 }
 
 TEST(ClientTest, StartAsyncOKWithReset)
@@ -287,7 +271,6 @@ TEST(ClientTest, StartAsyncOKWithReset)
         EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
         EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
         EXPECT_FALSE(resp->body().empty());
-        EXPECT_EQ(client.in_fly_count(), 0);
 
         client.Reset();
         resp = &InitClient(client);
@@ -298,7 +281,6 @@ TEST(ClientTest, StartAsyncOKWithReset)
             EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
             EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
             EXPECT_FALSE(resp->body().empty());
-            EXPECT_EQ(client.in_fly_count(), 0);
             ioc.Stop();
         });
     });
@@ -317,7 +299,6 @@ TEST(ClientTest, StartAsyncErrorWithReset)
     client.StartAsync([&client, &resp, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 1);
-        EXPECT_EQ(client.in_fly_count(), 0);
 
         client.Reset();
         resp = &InitClient(client);
@@ -328,7 +309,6 @@ TEST(ClientTest, StartAsyncErrorWithReset)
             EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
             EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
             EXPECT_FALSE(resp->body().empty());
-            EXPECT_EQ(client.in_fly_count(), 0);
             ioc.Stop();
         });
     });
@@ -353,7 +333,6 @@ TEST(ClientTest, StartWithRetryAsyncOKWithReset)
         EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
         EXPECT_FALSE(resp->body().empty());
         EXPECT_TRUE(client.current_attempt() <= client.max_retry_attempts);
-        EXPECT_EQ(client.in_fly_count(), 0);
 
         client.Reset();
         resp = &InitClient(client);
@@ -364,7 +343,6 @@ TEST(ClientTest, StartWithRetryAsyncOKWithReset)
             EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
             EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
             EXPECT_FALSE(resp->body().empty());
-            EXPECT_EQ(client.in_fly_count(), 0);
             ioc.Stop();
         });
     });
@@ -386,7 +364,6 @@ TEST(ClientTest, StartWithRetryAsyncErrorWithReset)
     {
         EXPECT_EQ(client.error_code().value(), 1);
         EXPECT_EQ(client.current_attempt(), client.max_retry_attempts);
-        EXPECT_EQ(client.in_fly_count(), 0);
 
         client.Reset();
         resp = &InitClient(client);
@@ -397,7 +374,6 @@ TEST(ClientTest, StartWithRetryAsyncErrorWithReset)
             EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
             EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
             EXPECT_FALSE(resp->body().empty());
-            EXPECT_EQ(client.in_fly_count(), 0);
             ioc.Stop();
         });
     });
@@ -437,7 +413,6 @@ TEST(ClientTest, StartWithRetryAsyncWithCancel)
     {
         EXPECT_EQ(client.error_code().value(), boost::beast::errc::operation_canceled);
         EXPECT_TRUE(client.current_attempt() < client.max_retry_attempts);
-        EXPECT_EQ(client.in_fly_count(), 0);
         ioc.Stop();
     });
 
@@ -445,7 +420,7 @@ TEST(ClientTest, StartWithRetryAsyncWithCancel)
     ioc.Wait();
 }
 
-TEST(ClientTest, InFlyCount)
+TEST(ClientTest, StartFutureOperationInProgress)
 {
     x::pool::IoContextPool ioc;
     ioc.Start(1);
@@ -456,13 +431,28 @@ TEST(ClientTest, InFlyCount)
     client.StartAsync([&client, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), boost::beast::errc::success);
-        EXPECT_EQ(client.in_fly_count(), 0);
         ioc.Stop();
     });
+    client.StartFuture().get();
+    EXPECT_EQ(client.error_code().value(), boost::beast::errc::success);
+    ioc.Wait();
+}
+
+TEST(ClientTest, StartAsyncOperationInProgress)
+{
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
+    x::http::Client client(ioc.io_context());
+    InitClient(client);
+
+    client.timeout = 10000;
     client.StartAsync([&client, &ioc]
     {
-        EXPECT_EQ(client.error_code().value(), boost::beast::errc::operation_in_progress);
-        EXPECT_EQ(client.in_fly_count(), 1);
+        EXPECT_EQ(client.error_code().value(), boost::beast::errc::success);
         ioc.Stop();
+    });
+    client.StartAsync([&client]
+    {
+        EXPECT_EQ(client.error_code().value(), boost::beast::errc::operation_in_progress);
     });
 }

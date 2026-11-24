@@ -29,7 +29,6 @@ class Client
     } state_;
     bool keep_alive_;
     int current_attempt_;
-    std::atomic<int> in_fly_count_;
     int64_t index_;
     boost::asio::io_context& io_context_;
     boost::asio::steady_timer retry_timer_;
@@ -59,7 +58,6 @@ public:
     [[nodiscard]] const boost::system::error_code& error_code() const { return error_code_; }
     [[nodiscard]] const boost::asio::io_context& io_context() const { return io_context_; }
     [[nodiscard]] boost::asio::io_context& io_context() { return io_context_; }
-    [[nodiscard]] int in_fly_count() const { return in_fly_count_.load(); }
     [[nodiscard]] int64_t index() const { return index_; }
 
     void Cancel();

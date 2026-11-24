@@ -19,7 +19,6 @@ Client::Client(boost::asio::io_context& ioc, const int index)
     : state_(RequestState::finished)
     , keep_alive_(false)
     , current_attempt_(1)
-    , in_fly_count_(0)
     , index_(index)
     , io_context_(ioc)
     , retry_timer_(ioc)
@@ -77,14 +76,21 @@ std::future<void> Client::StartWithRetryFuture()
 
 void Client::StartAsync(std::move_only_function<void()> callback)
 {
-    in_fly_count_.fetch_add(1);
     boost::asio::dispatch(
         io_context_,
         [this, callback = std::move(callback)]() mutable
         {
-            if (error_code_ || state_ != RequestState::finished)
+
+            if (error_code_)
             {
                 HandleFinished(std::move(callback));
+            }
+            else if (state_ != RequestState::finished)
+            {
+                const auto ec = error_code_;
+                error_code_ = boost::beast::errc::make_error_code(boost::beast::errc::operation_in_progress);
+                callback();
+                error_code_ = ec;
             }
             else
             {
@@ -264,15 +270,6 @@ bool Client::HandleError(const boost::system::error_code& ec, std::move_only_fun
 
 void Client::HandleFinished(std::move_only_function<void()> callback)
 {
-    if (in_fly_count_.fetch_sub(1) != 1)
-    {
-        const auto ec = error_code_;
-        error_code_ = boost::beast::errc::make_error_code(boost::beast::errc::operation_in_progress);
-        callback();
-        error_code_ = ec;
-        return;
-    }
-
     state_ = RequestState::finished;
     stream_.expires_never();
     if (stream_.socket().is_open())
