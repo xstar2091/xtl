@@ -217,15 +217,15 @@ TEST(ClientPoolTest, CancelAllFuture)
     auto* c2 = pool.GetClient().get();
     auto* c3 = pool.GetClient().get();
 
-    c1->StartAsync([c1]
+    c1->Start([c1]
     {
         EXPECT_EQ(c1->error_code().value(), boost::beast::errc::operation_canceled);
     });
-    c2->StartAsync([c2]
+    c2->Start([c2]
     {
         EXPECT_EQ(c2->error_code().value(), boost::beast::errc::operation_canceled);
     });
-    c3->StartAsync([c3]
+    c3->Start([c3]
     {
         EXPECT_EQ(c3->error_code().value(), boost::beast::errc::operation_canceled);
     });
@@ -257,17 +257,17 @@ TEST(ClientPoolTest, CancelAllAsync)
     auto* c2 = pool.GetClient().get();
     auto* c3 = pool.GetClient().get();
 
-    c1->StartAsync([c1, &latch]
+    c1->Start([c1, &latch]
     {
         EXPECT_EQ(c1->error_code().value(), boost::beast::errc::operation_canceled);
         latch.count_down();
     });
-    c2->StartAsync([c2, &latch]
+    c2->Start([c2, &latch]
     {
         EXPECT_EQ(c2->error_code().value(), boost::beast::errc::operation_canceled);
         latch.count_down();
     });
-    c3->StartAsync([c3, &latch]
+    c3->Start([c3, &latch]
     {
         EXPECT_EQ(c3->error_code().value(), boost::beast::errc::operation_canceled);
         latch.count_down();
@@ -304,17 +304,17 @@ TEST(ClientPoolTest, WaitAllReady)
     auto* c2 = pool.GetClient().get();
     auto* c3 = pool.GetClient().get();
 
-    c1->StartAsync([c1, &pool]
+    c1->Start([c1, &pool]
     {
         EXPECT_EQ(c1->error_code().value(), boost::beast::errc::operation_canceled);
         pool.Release(c1, [](bool){});
     });
-    c2->StartAsync([c2, &pool]
+    c2->Start([c2, &pool]
     {
         EXPECT_EQ(c2->error_code().value(), boost::beast::errc::operation_canceled);
         pool.Release(c2, [](bool){});
     });
-    c3->StartAsync([c3, &pool]
+    c3->Start([c3, &pool]
     {
         EXPECT_EQ(c3->error_code().value(), boost::beast::errc::operation_canceled);
         pool.Release(c3, [](bool){});

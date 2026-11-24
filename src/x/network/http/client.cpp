@@ -58,23 +58,23 @@ void Client::Reset()
     response.Reset();
 }
 
-std::future<void> Client::StartFuture()
+std::future<void> Client::Start()
 {
     std::promise<void> promise;
     auto future = promise.get_future();
-    StartAsync([promise = std::move(promise)]() mutable { promise.set_value(); });
+    Start([promise = std::move(promise)]() mutable { promise.set_value(); });
     return future;
 }
 
-std::future<void> Client::StartWithRetryFuture()
+std::future<void> Client::StartWithRetry()
 {
     std::promise<void> promise;
     auto future = promise.get_future();
-    StartWithRetryAsync([promise = std::move(promise)]() mutable { promise.set_value(); });
+    StartWithRetry([promise = std::move(promise)]() mutable { promise.set_value(); });
     return future;
 }
 
-void Client::StartAsync(std::move_only_function<void()> callback)
+void Client::Start(std::move_only_function<void()> callback)
 {
     boost::asio::dispatch(
         io_context_,
@@ -103,9 +103,9 @@ void Client::StartAsync(std::move_only_function<void()> callback)
     );
 }
 
-void Client::StartWithRetryAsync(std::move_only_function<void()> callback)
+void Client::StartWithRetry(std::move_only_function<void()> callback)
 {
-    StartAsync(
+    Start(
         [this, callback = std::move(callback)]() mutable
         {
             if (error_code_ == boost::beast::errc::operation_canceled)
@@ -138,7 +138,7 @@ void Client::StartWithRetryAsync(std::move_only_function<void()> callback)
                         else
                         {
                             ++current_attempt_;
-                            StartWithRetryAsync(std::move(callback));
+                            StartWithRetry(std::move(callback));
                         }
                     }
                 );
@@ -146,7 +146,7 @@ void Client::StartWithRetryAsync(std::move_only_function<void()> callback)
             else
             {
                 ++current_attempt_;
-                StartWithRetryAsync(std::move(callback));
+                StartWithRetry(std::move(callback));
             }
         }
     );

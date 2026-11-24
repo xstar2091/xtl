@@ -15,7 +15,7 @@ int main()
     req.target("/");
     req.version(11);
     auto& resp = client.response.New<x::http::Response::StringBody>();
-    auto future = client.StartFuture();
+    auto future = client.Start();
     future.get();
     std::cout << resp.body() << std::endl;
     std::cout << client.response.StatusCode() << std::endl;

@@ -28,7 +28,7 @@ TEST(ClientTest, StartFuture)
     const auto& resp = InitClient(client);
 
     client.timeout = 10000;
-    client.StartFuture().get();
+    client.Start().get();
     EXPECT_EQ(client.error_code().value(), 0);
     EXPECT_EQ(resp.result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
@@ -43,7 +43,7 @@ TEST(ClientTest, StartFutureTimeout)
     InitClient(client);
 
     client.timeout = 1;
-    client.StartFuture().get();
+    client.Start().get();
     EXPECT_EQ(client.error_code().value(), 1);
 }
 
@@ -57,7 +57,7 @@ TEST(ClientTest, StartWithRetryFutureOK)
     client.timeout = 10000;
     client.retry_interval = 10;
     client.max_retry_attempts = 3;
-    client.StartWithRetryFuture().get();
+    client.StartWithRetry().get();
     EXPECT_EQ(client.error_code().value(), 0);
     EXPECT_EQ(resp.result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
@@ -75,7 +75,7 @@ TEST(ClientTest, StartWithRetryFutureError)
     client.timeout = 1;
     client.retry_interval = 10;
     client.max_retry_attempts = 3;
-    client.StartWithRetryFuture().get();
+    client.StartWithRetry().get();
     EXPECT_EQ(client.error_code().value(), 1);
     EXPECT_EQ(client.current_attempt(), client.max_retry_attempts);
 }
@@ -88,7 +88,7 @@ TEST(ClientTest, StartAsync)
     auto& resp = InitClient(client);
 
     client.timeout = 10000;
-    client.StartAsync([&client, &resp, &ioc]
+    client.Start([&client, &resp, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 0);
         EXPECT_EQ(resp.result(), boost::beast::http::status::ok);
@@ -108,7 +108,7 @@ TEST(ClientTest, StartAsyncTimout)
     InitClient(client);
 
     client.timeout = 1;
-    client.StartAsync([&client, &ioc]
+    client.Start([&client, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 1);
         ioc.Stop();
@@ -127,7 +127,7 @@ TEST(ClientTest, StartWithRetryAsyncOK)
     client.timeout = 10000;
     client.retry_interval = 10;
     client.max_retry_attempts = 3;
-    client.StartWithRetryAsync([&client, &resp, &ioc]
+    client.StartWithRetry([&client, &resp, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 0);
         EXPECT_EQ(resp.result(), boost::beast::http::status::ok);
@@ -150,7 +150,7 @@ TEST(ClientTest, StartWithRetryAsyncError)
     client.timeout = 1;
     client.retry_interval = 10;
     client.max_retry_attempts = 3;
-    client.StartWithRetryAsync([&client, &ioc]
+    client.StartWithRetry([&client, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 1);
         EXPECT_EQ(client.current_attempt(), client.max_retry_attempts);
@@ -168,7 +168,7 @@ TEST(ClientTest, StartFutureOKWithReset)
     const auto* resp = &InitClient(client);
 
     client.timeout = 10000;
-    client.StartFuture().get();
+    client.Start().get();
     EXPECT_EQ(client.error_code().value(), 0);
     EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
@@ -177,7 +177,7 @@ TEST(ClientTest, StartFutureOKWithReset)
     client.Reset();
     resp = &InitClient(client);
     client.timeout = 10000;
-    client.StartFuture().get();
+    client.Start().get();
     EXPECT_EQ(client.error_code().value(), 0);
     EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
@@ -192,13 +192,13 @@ TEST(ClientTest, StartFutureErrorWithReset)
     InitClient(client);
 
     client.timeout = 1;
-    client.StartFuture().get();
+    client.Start().get();
     EXPECT_EQ(client.error_code().value(), 1);
 
     client.Reset();
     const auto* resp = &InitClient(client);
     client.timeout = 10000;
-    client.StartFuture().get();
+    client.Start().get();
     EXPECT_EQ(client.error_code().value(), 0);
     EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
@@ -215,7 +215,7 @@ TEST(ClientTest, StartWithRetryFutureOKWithReset)
     client.timeout = 10000;
     client.retry_interval = 10;
     client.max_retry_attempts = 3;
-    client.StartWithRetryFuture().get();
+    client.StartWithRetry().get();
     EXPECT_EQ(client.error_code().value(), 0);
     EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
@@ -224,7 +224,7 @@ TEST(ClientTest, StartWithRetryFutureOKWithReset)
 
     client.Reset();
     resp = &InitClient(client);
-    client.StartWithRetryFuture().get();
+    client.StartWithRetry().get();
     EXPECT_EQ(client.error_code().value(), 0);
     EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
@@ -242,14 +242,14 @@ TEST(ClientTest, StartWithRetryFutureErrorWithReset)
     client.timeout = 1;
     client.retry_interval = 10;
     client.max_retry_attempts = 3;
-    client.StartWithRetryFuture().get();
+    client.StartWithRetry().get();
     EXPECT_EQ(client.error_code().value(), 1);
     EXPECT_EQ(client.current_attempt(), client.max_retry_attempts);
 
     client.Reset();
     const auto* resp = &InitClient(client);
     client.timeout = 10000;
-    client.StartWithRetryFuture().get();
+    client.StartWithRetry().get();
     EXPECT_EQ(client.error_code().value(), 0);
     EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
     EXPECT_EQ(client.response.StatusCode(), static_cast<int>(boost::beast::http::status::ok));
@@ -265,7 +265,7 @@ TEST(ClientTest, StartAsyncOKWithReset)
     const auto* resp = &InitClient(client);
 
     client.timeout = 10000;
-    client.StartAsync([&client, &resp, &ioc]
+    client.Start([&client, &resp, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 0);
         EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
@@ -275,7 +275,7 @@ TEST(ClientTest, StartAsyncOKWithReset)
         client.Reset();
         resp = &InitClient(client);
         client.timeout = 10000;
-        client.StartAsync([&client, &resp, &ioc]
+        client.Start([&client, &resp, &ioc]
         {
             EXPECT_EQ(client.error_code().value(), 0);
             EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
@@ -296,14 +296,14 @@ TEST(ClientTest, StartAsyncErrorWithReset)
     const auto* resp = &InitClient(client);
 
     client.timeout = 1;
-    client.StartAsync([&client, &resp, &ioc]
+    client.Start([&client, &resp, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 1);
 
         client.Reset();
         resp = &InitClient(client);
         client.timeout = 10000;
-        client.StartAsync([&client, &resp, &ioc]
+        client.Start([&client, &resp, &ioc]
         {
             EXPECT_EQ(client.error_code().value(), 0);
             EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
@@ -326,7 +326,7 @@ TEST(ClientTest, StartWithRetryAsyncOKWithReset)
     client.timeout = 10000;
     client.retry_interval = 10;
     client.max_retry_attempts = 3;
-    client.StartWithRetryAsync([&client, &resp, &ioc]
+    client.StartWithRetry([&client, &resp, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 0);
         EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
@@ -337,7 +337,7 @@ TEST(ClientTest, StartWithRetryAsyncOKWithReset)
         client.Reset();
         resp = &InitClient(client);
         client.timeout = 10000;
-        client.StartWithRetryAsync([&client, &resp, &ioc]
+        client.StartWithRetry([&client, &resp, &ioc]
         {
             EXPECT_EQ(client.error_code().value(), 0);
             EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
@@ -360,7 +360,7 @@ TEST(ClientTest, StartWithRetryAsyncErrorWithReset)
     client.timeout = 1;
     client.retry_interval = 10;
     client.max_retry_attempts = 3;
-    client.StartWithRetryAsync([&client, &resp, &ioc]
+    client.StartWithRetry([&client, &resp, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), 1);
         EXPECT_EQ(client.current_attempt(), client.max_retry_attempts);
@@ -368,7 +368,7 @@ TEST(ClientTest, StartWithRetryAsyncErrorWithReset)
         client.Reset();
         resp = &InitClient(client);
         client.timeout = 10000;
-        client.StartWithRetryAsync([&client, &resp, &ioc]
+        client.StartWithRetry([&client, &resp, &ioc]
         {
             EXPECT_EQ(client.error_code().value(), 0);
             EXPECT_EQ(resp->result(), boost::beast::http::status::ok);
@@ -389,7 +389,7 @@ TEST(ClientTest, StartAsyncWithCancel)
     InitClient(client);
 
     client.timeout = 10000;
-    client.StartAsync([&client, &ioc]
+    client.Start([&client, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), boost::beast::errc::operation_canceled);
         ioc.Stop();
@@ -409,7 +409,7 @@ TEST(ClientTest, StartWithRetryAsyncWithCancel)
     client.timeout = 10000;
     client.retry_interval = 10;
     client.max_retry_attempts = 3;
-    client.StartWithRetryAsync([&client, &ioc]
+    client.StartWithRetry([&client, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), boost::beast::errc::operation_canceled);
         EXPECT_TRUE(client.current_attempt() < client.max_retry_attempts);
@@ -428,12 +428,12 @@ TEST(ClientTest, StartFutureOperationInProgress)
     InitClient(client);
 
     client.timeout = 10000;
-    client.StartAsync([&client, &ioc]
+    client.Start([&client, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), boost::beast::errc::success);
         ioc.Stop();
     });
-    client.StartFuture().get();
+    client.Start().get();
     EXPECT_EQ(client.error_code().value(), boost::beast::errc::success);
     ioc.Wait();
 }
@@ -446,12 +446,12 @@ TEST(ClientTest, StartAsyncOperationInProgress)
     InitClient(client);
 
     client.timeout = 10000;
-    client.StartAsync([&client, &ioc]
+    client.Start([&client, &ioc]
     {
         EXPECT_EQ(client.error_code().value(), boost::beast::errc::success);
         ioc.Stop();
     });
-    client.StartAsync([&client]
+    client.Start([&client]
     {
         EXPECT_EQ(client.error_code().value(), boost::beast::errc::operation_in_progress);
     });

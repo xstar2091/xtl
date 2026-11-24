@@ -62,10 +62,10 @@ public:
 
     void Cancel();
     void Reset();
-    std::future<void> StartFuture();
-    std::future<void> StartWithRetryFuture();
-    void StartAsync(std::move_only_function<void()> callback);
-    void StartWithRetryAsync(std::move_only_function<void()> callback);
+    std::future<void> Start();
+    std::future<void> StartWithRetry();
+    void Start(std::move_only_function<void()> callback);
+    void StartWithRetry(std::move_only_function<void()> callback);
 
 private:
     void Resolve(std::move_only_function<void()> callback);
