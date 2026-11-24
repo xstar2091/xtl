@@ -21,7 +21,6 @@ int main()
     std::cout << client.response.StatusCode() << std::endl;
     std::cout << client.error_code().value() << ": " << client.error_code().message() << std::endl;
     std::cout << "current attempt: " << client.current_attempt() << std::endl;
-    std::cout << "in fly count:    " << client.in_fly_count() << std::endl;
     thrd.join();
     return 0;
 }
