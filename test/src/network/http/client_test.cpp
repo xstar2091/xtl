@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <thread>
-#include "utils/io_context.h"
 #include "x/network/http/client.h"
+#include "x/network/pool/io_context_pool.h"
 
 namespace
 {
@@ -22,7 +22,8 @@ const x::http::Response::StringBody& InitClient(x::http::Client& client)
 
 TEST(ClientTest, StartFuture)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     const auto& resp = InitClient(client);
 
@@ -37,7 +38,8 @@ TEST(ClientTest, StartFuture)
 
 TEST(ClientTest, StartFutureTimeout)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     InitClient(client);
 
@@ -49,7 +51,8 @@ TEST(ClientTest, StartFutureTimeout)
 
 TEST(ClientTest, StartWithRetryFutureOK)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     const auto& resp = InitClient(client);
 
@@ -67,7 +70,8 @@ TEST(ClientTest, StartWithRetryFutureOK)
 
 TEST(ClientTest, StartWithRetryFutureError)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     InitClient(client);
 
@@ -82,7 +86,8 @@ TEST(ClientTest, StartWithRetryFutureError)
 
 TEST(ClientTest, StartAsync)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     auto& resp = InitClient(client);
 
@@ -102,7 +107,8 @@ TEST(ClientTest, StartAsync)
 
 TEST(ClientTest, StartAsyncTimout)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     InitClient(client);
 
@@ -119,7 +125,8 @@ TEST(ClientTest, StartAsyncTimout)
 
 TEST(ClientTest, StartWithRetryAsyncOK)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     auto& resp = InitClient(client);
 
@@ -142,7 +149,8 @@ TEST(ClientTest, StartWithRetryAsyncOK)
 
 TEST(ClientTest, StartWithRetryAsyncError)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     InitClient(client);
 
@@ -162,7 +170,8 @@ TEST(ClientTest, StartWithRetryAsyncError)
 
 TEST(ClientTest, StartFutureOKWithReset)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     const auto* resp = &InitClient(client);
 
@@ -187,7 +196,8 @@ TEST(ClientTest, StartFutureOKWithReset)
 
 TEST(ClientTest, StartFutureErrorWithReset)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     InitClient(client);
 
@@ -209,7 +219,8 @@ TEST(ClientTest, StartFutureErrorWithReset)
 
 TEST(ClientTest, StartWithRetryFutureOKWithReset)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     const auto* resp = &InitClient(client);
 
@@ -237,7 +248,8 @@ TEST(ClientTest, StartWithRetryFutureOKWithReset)
 
 TEST(ClientTest, StartWithRetryFutureErrorWithReset)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     InitClient(client);
 
@@ -263,7 +275,8 @@ TEST(ClientTest, StartWithRetryFutureErrorWithReset)
 
 TEST(ClientTest, StartAsyncOKWithReset)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     const auto* resp = &InitClient(client);
 
@@ -295,7 +308,8 @@ TEST(ClientTest, StartAsyncOKWithReset)
 
 TEST(ClientTest, StartAsyncErrorWithReset)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     const auto* resp = &InitClient(client);
 
@@ -324,7 +338,8 @@ TEST(ClientTest, StartAsyncErrorWithReset)
 
 TEST(ClientTest, StartWithRetryAsyncOKWithReset)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     const auto* resp = &InitClient(client);
 
@@ -359,7 +374,8 @@ TEST(ClientTest, StartWithRetryAsyncOKWithReset)
 
 TEST(ClientTest, StartWithRetryAsyncErrorWithReset)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     const auto* resp = &InitClient(client);
 
@@ -391,7 +407,8 @@ TEST(ClientTest, StartWithRetryAsyncErrorWithReset)
 
 TEST(ClientTest, StartAsyncWithCancel)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     InitClient(client);
 
@@ -408,7 +425,8 @@ TEST(ClientTest, StartAsyncWithCancel)
 
 TEST(ClientTest, StartWithRetryAsyncWithCancel)
 {
-    x::test::IoContext ioc;
+    x::pool::IoContextPool ioc;
+    ioc.Start(1);
     x::http::Client client(ioc.io_context());
     InitClient(client);
 
