@@ -1,26 +1,21 @@
-#include <iostream>
-#include <thread>
-#include "x/network/http/client.h"
+#include "x/log.h"
+#include "x/uuid.h"
 
 int main()
 {
-    std::cout << "Hello, World!" << std::endl;
-    boost::asio::io_context ioc;
-    auto work_guard = boost::asio::make_work_guard(ioc);
-    std::thread thrd([&ioc] { ioc.run(); });
-    x::http::Client client(ioc);
-    client.host = "www.baidu.com";
-    auto& req = client.request.New<x::http::Request::EmptyBody>();
-    req.method(boost::beast::http::verb::get);
-    req.target("/");
-    req.version(11);
-    auto& resp = client.response.New<x::http::Response::StringBody>();
-    auto future = client.Start();
-    future.get();
-    std::cout << resp.body() << std::endl;
-    std::cout << client.response.StatusCode() << std::endl;
-    std::cout << client.error_code().value() << ": " << client.error_code().message() << std::endl;
-    std::cout << "current attempt: " << client.current_attempt() << std::endl;
-    thrd.join();
+    x::Log::Init("default", spdlog::level::info);
+    const x::Log log{.trace = x::Uuid{.remote_hyphen = true}.Random(), .meta = "car001:id001:imei001", .module = "sim" };
+    const x::Log::Logger logger = log.CreateLogger("MyMain");
+    XLOG_INFO(logger, "log for info");
+    XLOG_WARN(logger, "log for warn");
+    XLOG_ERROR(logger, "log for error");
+    XLOG_CRITICAL(logger, "log for critical");
+
+    const auto log2 = log.ChildLog();
+    const auto logger2 = log2.CreateLogger("MyMain2");
+    XLOG_INFO(logger2, "log for info");
+    XLOG_WARN(logger2, "log for warn");
+    XLOG_ERROR(logger2, "log for error");
+    XLOG_CRITICAL(logger2, "log for critical");
     return 0;
 }
