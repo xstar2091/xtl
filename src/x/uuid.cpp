@@ -10,7 +10,7 @@ namespace x
 std::string Uuid::Random() const
 {
     std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-    if (remote_hyphen) std::erase(uuid, '-');
+    if (!with_hyphen) std::erase(uuid, '-');
     if (!lower_case) std::ranges::transform(uuid, uuid.begin(), [](const unsigned char c) { return std::toupper(c); });
     return uuid;
 }

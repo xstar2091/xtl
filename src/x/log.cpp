@@ -52,7 +52,7 @@ Log Log::ChildLog() const
     Log log{.module = module};
     log.meta = meta;
     log.trace.reserve(trace.size() + 1 + trace_id_size);
-    log.trace.append(trace).append(":").append(Uuid{.remote_hyphen = true}.Random());
+    log.trace.append(trace).append(":").append(Uuid{.with_hyphen = false}.Random());
     return log;
 }
 

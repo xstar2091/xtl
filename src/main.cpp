@@ -4,7 +4,7 @@
 int main()
 {
     x::Log::Init("default", spdlog::level::info);
-    const x::Log log{.trace = x::Uuid{.remote_hyphen = true}.Random(), .meta = "car001:id001:imei001", .module = "sim" };
+    const x::Log log{.trace = x::Uuid{.with_hyphen = false}.Random(), .meta = "car001:id001:imei001", .module = "sim" };
     const x::Log::Logger logger = log.CreateLogger("MyMain");
     XLOG_INFO(logger, "log for info");
     XLOG_WARN(logger, "log for warn");
