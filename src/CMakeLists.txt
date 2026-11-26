@@ -1,9 +1,11 @@
 project(x)
 
+find_package(jsoncpp REQUIRED)
 file(GLOB_RECURSE LIB_SRC CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/x/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/x/*.h)
 add_library(${PROJECT_NAME} ${LIB_SRC})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(${PROJECT_NAME} PUBLIC
+    JsonCpp::JsonCpp
     spdlog
     pthread
 )
