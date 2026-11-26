@@ -68,20 +68,9 @@ public:
                         current = nullptr;
                     }
                 }
-                else if constexpr (
-                    std::is_same_v<std::decay_t<T>, std::string> ||
-                    std::is_same_v<std::decay_t<T>, const char*> ||
-                    std::is_same_v<std::decay_t<T>, char*>)
-                {
+                else if constexpr (std::is_convertible_v<T, std::string_view>) {
                     if (current->isObject() && current->isMember(arg)) {
                         current = &(*current)[arg];
-                    } else {
-                        current = nullptr;
-                    }
-                }
-                else if constexpr (std::is_convertible_v<T, std::string_view>) {
-                    if (const std::string key(arg); current->isObject() && current->isMember(key)) {
-                        current = &(*current)[key];
                     } else {
                         current = nullptr;
                     }
@@ -124,19 +113,7 @@ public:
         auto Line(Names&&... names) const -> std::tuple<Types...> {
             static_assert(sizeof...(Types) == sizeof...(Names),
                          "number of types must match number of names");
-
-            if (!current_ || !current_->isObject()) {
-                if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error("cannot read from null or non-object JSON");
-                }
-                if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
-                {
-                    *error_message_ = "cannot read from null or non-object JSON";
-                }
-                return std::tuple<Types...>();
-            }
-
-            return std::make_tuple(extract_value<Types>(std::forward<Names>(names))...);
+            return std::make_tuple(ExtractValue<Types>(std::forward<Names>(names))...);
         }
 
         // 读取一行数据，返回包含 optional 的元组
@@ -149,7 +126,7 @@ public:
                 return std::tuple<std::optional<Types>...>{};
             }
 
-            return std::make_tuple(try_extract_value<Types>(std::forward<Names>(names))...);
+            return std::make_tuple(TryExtractValue<Types>(std::forward<Names>(names))...);
         }
 
         template<typename T>
@@ -164,7 +141,7 @@ public:
                 return T{};
             }
 
-            return extract<T>(*current_, "scalar");
+            return Extract<T>(*current_, "scalar");
         }
 
         template<typename T>
@@ -174,7 +151,7 @@ public:
             }
 
             try {
-                return extract<T>(*current_, "scalar");
+                return Extract<T>(*current_, "scalar");
             } catch(...) {
                 return std::nullopt;
             }
@@ -201,11 +178,11 @@ public:
         ReadPolicy policy_ = ReadPolicy::RETURN_ERROR;
 
         // 获取JSON值的类型名称
-        static const char* get_json_type_name(Json::ValueType type);
+        static const char* GetJsonTypeName(Json::ValueType type);
 
         // 获取期望类型的名称
         template<typename T>
-        static const char* get_expected_type_name() {
+        static const char* GetExpectedTypeName() {
             if constexpr (std::is_same_v<T, short>) return "short";
             else if constexpr (std::is_same_v<T, unsigned short>) return "ushort";
             else if constexpr (std::is_same_v<T, int>) return "int";
@@ -214,6 +191,14 @@ public:
             else if constexpr (std::is_same_v<T, unsigned long>) return "ulong";
             else if constexpr (std::is_same_v<T, long long>) return "longlong";
             else if constexpr (std::is_same_v<T, unsigned long long>) return "ulonglong";
+            else if constexpr (std::is_same_v<T, int8_t>) return "int8_t";
+            else if constexpr (std::is_same_v<T, uint8_t>) return "uint8_t";
+            else if constexpr (std::is_same_v<T, int16_t>) return "int16_t";
+            else if constexpr (std::is_same_v<T, uint16_t>) return "uint16_t";
+            else if constexpr (std::is_same_v<T, int32_t>) return "int32_t";
+            else if constexpr (std::is_same_v<T, uint32_t>) return "uint32_t";
+            else if constexpr (std::is_same_v<T, int64_t>) return "int64_t";
+            else if constexpr (std::is_same_v<T, uint64_t>) return "uint64_t";
             else if constexpr (std::is_same_v<T, double>) return "double";
             else if constexpr (std::is_same_v<T, float>) return "float";
             else if constexpr (std::is_same_v<T, bool>) return "bool";
@@ -224,45 +209,54 @@ public:
             else return "unknown";
         }
 
+        template<typename T>
+        [[nodiscard]] std::string CreateErrorMessage(const Json::Value& value, const std::string_view field_name) const
+        {
+            return std::format(
+                "type mismatched for key '{}', expected {}, got {}",
+                field_name, GetExpectedTypeName<T>(), GetJsonTypeName(value.type())
+            );
+        }
+
         // 提取单个值（根据策略处理）
         template<typename T>
-        T extract_value(const std::string& name) const {
+        T ExtractValue(const std::string_view name) const {
             if (!current_ || !current_->isObject()) {
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error("cannot read from null or non-object JSON");
+                    throw std::runtime_error(std::format("cannot read key '{}' from null or non-object JSON", name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = "cannot read from null or non-object JSON";
+                    *error_message_ = std::format("cannot read key '{}' from null or non-object JSON", name);
                 }
                 return T{};
             }
 
             if (!current_->isMember(name)) {
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error("field '" + name + "' not found");
+                    throw std::runtime_error(std::format("key '{}' not found in JSON", name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = "field '" + name + "' not found";
+                    *error_message_ = std::format("key '{}' not found in JSON", name);
                 }
                 return T{};
             }
 
             const Json::Value& value = (*current_)[name];
-            return extract<T>(value, name);
+            return Extract<T>(value, name);
         }
 
         // 尝试提取值，返回optional
         template<typename T>
-        std::optional<T> try_extract_value(const std::string& name) const {
+        std::optional<T> TryExtractValue(const std::string& name) const {
             if (!current_ || !current_->isObject() || !current_->isMember(name)) {
                 return std::nullopt;
             }
 
             const Json::Value& value = (*current_)[name];
             try {
-                return extract<T>(value, name);
+                return Extract<T>(value, name);
             } catch(...) {
                 return std::nullopt;
             }
@@ -270,18 +264,15 @@ public:
 
         // 类型提取实现
         template<typename T>
-        T extract(const Json::Value& value, const std::string& field_name) const {
+        T Extract(const Json::Value& value, const std::string_view field_name) const {
             if constexpr (std::is_same_v<T, const char*>) {
                 if (!value.isString()) {
                     if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                        throw std::runtime_error(
-                            "type mismatch for field '" + field_name + "', expected const char*, got " +
-                            get_json_type_name(value.type()));
+                        throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                     }
                     if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                     {
-                        *error_message_ = "type mismatch for field '" + field_name + "', expected const char*, got " +
-                            get_json_type_name(value.type());
+                        *error_message_ = CreateErrorMessage<T>(value, field_name);
                     }
                     return "";
                 }
@@ -290,14 +281,11 @@ public:
             else if constexpr (std::is_same_v<T, std::string_view>) {
                 if (!value.isString()) {
                     if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                        throw std::runtime_error(
-                            "type mismatch for field '" + field_name + "', expected string_view, got " +
-                            get_json_type_name(value.type()));
+                        throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                     }
                     if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                     {
-                        *error_message_ = "type mismatch for field '" + field_name + "', expected string_view, got " +
-                            get_json_type_name(value.type());
+                        *error_message_ = CreateErrorMessage<T>(value, field_name);
                     }
                     return std::string_view{};
                 }
@@ -306,14 +294,11 @@ public:
             else if constexpr (std::is_same_v<T, std::string>) {
                 if (!value.isString()) {
                     if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                        throw std::runtime_error(
-                            "type mismatch for field '" + field_name + "', expected string, got " +
-                            get_json_type_name(value.type()));
+                        throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                     }
                     if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                     {
-                        *error_message_ = "type mismatch for field '" + field_name + "', expected string, got " +
-                            get_json_type_name(value.type());
+                        *error_message_ = CreateErrorMessage<T>(value, field_name);
                     }
                     return T{};
                 }
@@ -325,140 +310,118 @@ public:
             ) {
                 if (value.isInt()) return static_cast<T>(value.asInt());
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return 0;
             }
             else if constexpr (std::is_same_v<T, int>) {
                 if (value.isInt()) return value.asInt();
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return 0;
             }
             else if constexpr (std::is_same_v<T, unsigned int>) {
                 if (value.isUInt()) return value.asUInt();
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return 0;
             }
             else if constexpr (std::is_same_v<T, long> || std::is_same_v<T, long long>) {
                 if (value.isInt64()) return static_cast<T>(value.asInt64());
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return 0;
             }
             else if constexpr (std::is_same_v<T, unsigned long> || std::is_same_v<T, unsigned long long>) {
                 if (value.isUInt64()) return static_cast<T>(value.asUInt64());
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return 0;
             }
             else if constexpr (std::is_same_v<T, int64_t>) {
                 if (value.isInt64()) return value.asInt64();
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return 0;
             }
             else if constexpr (std::is_same_v<T, uint64_t>) {
                 if (value.isUInt64()) return value.asUInt64();
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return 0;
             }
             else if constexpr (std::is_same_v<T, double>) {
                 if (value.isDouble()) return value.asDouble();
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return 0.0;
             }
             else if constexpr (std::is_same_v<T, float>) {
                 if (value.isDouble()) return static_cast<float>(value.asDouble());
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return 0.0;
             }
             else if constexpr (std::is_same_v<T, bool>) {
                 if (value.isBool()) return value.asBool();
                 if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                    throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                    throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
                 }
                 if (policy_ == ReadPolicy::RETURN_ERROR && error_message_)
                 {
-                    *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                        field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                    *error_message_ = CreateErrorMessage<T>(value, field_name);
                 }
                 return false;
             }
             if (policy_ == ReadPolicy::THROW_EXCEPTION) {
-                throw std::runtime_error(std::format("type mismatch for field '{}', expected {}, got {}",
-                    field_name, get_expected_type_name<T>(), get_json_type_name(value.type())));
+                throw std::runtime_error(CreateErrorMessage<T>(value, field_name));
             }
             if (policy_ == ReadPolicy::RETURN_ERROR && error_message_) {
-                *error_message_ = std::format("type mismatch for field '{}', expected {}, got {}",
-                    field_name, get_expected_type_name<T>(), get_json_type_name(value.type()));
+                *error_message_ = CreateErrorMessage<T>(value, field_name);
             }
             return T{};
         }

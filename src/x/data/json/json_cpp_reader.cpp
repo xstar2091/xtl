@@ -90,7 +90,7 @@ std::string JsonCppReader::Reader::ToString() const
     return Json::writeString(builder, *Raw());
 }
 
-const char* JsonCppReader::Reader::get_json_type_name(const Json::ValueType type)
+const char* JsonCppReader::Reader::GetJsonTypeName(const Json::ValueType type)
 {
     switch (type) {
         case Json::nullValue: return "null";
