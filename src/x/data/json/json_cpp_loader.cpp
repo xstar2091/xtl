@@ -149,7 +149,7 @@ bool JsonCppLoader::ExpandPlaceholder(
     char* end_ptr = nullptr;
     if (type == "int")
     {
-        if (const long int val = strtol(value.data(), &end_ptr, 10); errno == 0 && end_ptr[0] == '0')
+        if (const long int val = strtol(value.data(), &end_ptr, 10); errno == 0 && end_ptr[0] == '\0')
         {
             obj = val;
         }
