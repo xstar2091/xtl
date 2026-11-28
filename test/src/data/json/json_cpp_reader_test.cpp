@@ -345,12 +345,21 @@ TEST(JsonCppReaderTest, TryScalarKeyNotExist)
     EXPECT_FALSE(reader.TryScalar<double>().has_value());
 }
 
-TEST(JsonCppReaderTest, Number)
+TEST(JsonCppReaderTest, IntNumber)
 {
     const x::test::data::JsonCppData data;
     x::data::JsonCppReader json(&data.json);
-    const auto reader = json.CreateReader();
+    auto reader = json.CreateReader();
 
+    auto [val_bool] = reader.Line<bool>("user_number");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'user_number', expected bool, got int")
+    );
+    EXPECT_EQ(val_bool, false);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
     auto [val_short] = reader.Line<short>("user_number");
     EXPECT_EQ(val_short, static_cast<short>(data.json["user_number"].asInt()));
     auto [val_ushort] = reader.Line<unsigned short>("user_number");
@@ -367,10 +376,11 @@ TEST(JsonCppReaderTest, Number)
     EXPECT_EQ(val_longlong, data.json["user_number"].asInt64());
     auto [val_ulonglong] = reader.Line<unsigned long long int>("user_number");
     EXPECT_EQ(val_ulonglong, data.json["user_number"].asUInt64());
-    auto [val_float] = reader.Line<float>("average_price");
-    EXPECT_DOUBLE_EQ(val_float, data.json["average_price"].asFloat());
-    auto [val_double] = reader.Line<double>("average_price");
-    EXPECT_DOUBLE_EQ(val_double, data.json["average_price"].asDouble());
+
+    auto [val_float] = reader.Line<float>("user_number");
+    EXPECT_FLOAT_EQ(val_float, data.json["user_number"].asFloat());
+    auto [val_double] = reader.Line<double>("user_number");
+    EXPECT_DOUBLE_EQ(val_double, data.json["user_number"].asDouble());
 
     auto [val_int8] = reader.Line<int8_t>("user_number");
     EXPECT_EQ(val_int8, static_cast<int8_t>(data.json["user_number"].asInt()));
@@ -388,6 +398,349 @@ TEST(JsonCppReaderTest, Number)
     EXPECT_EQ(val_int64, data.json["user_number"].asInt64());
     auto [val_uint64] = reader.Line<uint64_t>("user_number");
     EXPECT_EQ(val_uint64, data.json["user_number"].asUInt64());
+}
+
+TEST(JsonCppReaderTest, DoubleNumber)
+{
+    const x::test::data::JsonCppData data;
+    x::data::JsonCppReader json(&data.json);
+    auto reader = json.CreateReader().SetErrorPolicy();
+
+    auto [val_bool] = reader.Line<bool>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected bool, got real")
+    );
+    EXPECT_EQ(val_bool, false);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_short] = reader.Line<short>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected short, got real")
+    );
+    EXPECT_EQ(val_short, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_ushort] = reader.Line<unsigned short>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected ushort, got real")
+    );
+    EXPECT_EQ(val_ushort, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_int] = reader.Line<int>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected int, got real")
+    );
+    EXPECT_EQ(val_int, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint] = reader.Line<unsigned int>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected uint, got real")
+    );
+    EXPECT_EQ(val_uint, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_long] = reader.Line<long int>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected long, got real")
+    );
+    EXPECT_EQ(val_long, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_ulong] = reader.Line<unsigned long int>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected ulong, got real")
+    );
+    EXPECT_EQ(val_ulong, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_longlong] = reader.Line<long long int>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected longlong, got real")
+    );
+    EXPECT_EQ(val_longlong, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_ulonglong] = reader.Line<unsigned long long int>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected ulonglong, got real")
+    );
+    EXPECT_EQ(val_ulonglong, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+
+    auto [val_float] = reader.Line<float>("average_price");
+    EXPECT_FLOAT_EQ(val_float, data.json["average_price"].asFloat());
+    auto [val_double] = reader.Line<double>("average_price");
+    EXPECT_DOUBLE_EQ(val_double, data.json["average_price"].asDouble());
+
+    auto [val_int8] = reader.Line<int8_t>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected int8_t, got real")
+    );
+    EXPECT_EQ(val_int8, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint8] = reader.Line<uint8_t>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected uint8_t, got real")
+    );
+    EXPECT_EQ(val_uint8, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_int16] = reader.Line<int16_t>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected short, got real")
+    );
+    EXPECT_EQ(val_int16, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint16] = reader.Line<uint16_t>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected ushort, got real")
+    );
+    EXPECT_EQ(val_uint16, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_int32] = reader.Line<int32_t>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected int, got real")
+    );
+    EXPECT_EQ(val_int32, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint32] = reader.Line<uint32_t>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected uint, got real")
+    );
+    EXPECT_EQ(val_uint32, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_int64] = reader.Line<int64_t>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected long, got real")
+    );
+    EXPECT_EQ(val_int64, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint64] = reader.Line<uint64_t>("average_price");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'average_price', expected ulong, got real")
+    );
+    EXPECT_EQ(val_uint64, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+}
+
+TEST(JsonCppReaderTest, BoolNumber)
+{
+    const x::test::data::JsonCppData data;
+    x::data::JsonCppReader json(&data.json);
+    auto reader = json.CreateReader().SetErrorPolicy();
+
+    auto [val_bool] = reader.Line<bool>("month_use");
+    EXPECT_FALSE(reader.Error());
+    EXPECT_TRUE(reader.ErrorMessage().empty());
+    EXPECT_EQ(val_bool, data.json["month_use"].asBool());
+    auto [val_short] = reader.Line<short>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected short, got bool")
+    );
+    EXPECT_EQ(val_short, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_ushort] = reader.Line<unsigned short>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected ushort, got bool")
+    );
+    EXPECT_EQ(val_ushort, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_int] = reader.Line<int>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected int, got bool")
+    );
+    EXPECT_EQ(val_int, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint] = reader.Line<unsigned int>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected uint, got bool")
+    );
+    EXPECT_EQ(val_uint, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_long] = reader.Line<long int>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected long, got bool")
+    );
+    EXPECT_EQ(val_long, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_ulong] = reader.Line<unsigned long int>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected ulong, got bool")
+    );
+    EXPECT_EQ(val_ulong, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_longlong] = reader.Line<long long int>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected longlong, got bool")
+    );
+    EXPECT_EQ(val_longlong, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_ulonglong] = reader.Line<unsigned long long int>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected ulonglong, got bool")
+    );
+    EXPECT_EQ(val_ulonglong, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+
+    auto [val_float] = reader.Line<float>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected float, got bool")
+    );
+    EXPECT_EQ(val_float, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_double] = reader.Line<double>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected double, got bool")
+    );
+    EXPECT_EQ(val_double, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+
+    auto [val_int8] = reader.Line<int8_t>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected int8_t, got bool")
+    );
+    EXPECT_EQ(val_int8, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint8] = reader.Line<uint8_t>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected uint8_t, got bool")
+    );
+    EXPECT_EQ(val_uint8, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_int16] = reader.Line<int16_t>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected short, got bool")
+    );
+    EXPECT_EQ(val_int16, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint16] = reader.Line<uint16_t>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected ushort, got bool")
+    );
+    EXPECT_EQ(val_uint16, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_int32] = reader.Line<int32_t>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected int, got bool")
+    );
+    EXPECT_EQ(val_int32, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint32] = reader.Line<uint32_t>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected uint, got bool")
+    );
+    EXPECT_EQ(val_uint32, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_int64] = reader.Line<int64_t>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected long, got bool")
+    );
+    EXPECT_EQ(val_int64, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
+    auto [val_uint64] = reader.Line<uint64_t>("month_use");
+    EXPECT_TRUE(reader.Error());
+    EXPECT_EQ(
+        reader.ErrorMessage(),
+        std::string("type mismatched for key 'month_use', expected ulong, got bool")
+    );
+    EXPECT_EQ(val_uint64, 0);
+    reader.ClearError();
+    EXPECT_FALSE(reader.Error());
 }
 
 TEST(JsonCppReaderTest, String)
